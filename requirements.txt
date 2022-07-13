@@ -1,0 +1,10 @@
+autobahn_rce
+numpy
+pandas
+python-dotenv
+requests
+six
+Twisted
+websocket_client
+xlwings
+
