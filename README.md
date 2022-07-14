@@ -13,3 +13,5 @@ keep the `.env`, `.env.secret` and `exaple.py` in the same directory before runn
 
 ## What's The Catch
 With This  You can get live option chain data (of any nfo instrument and any valid expiry) along with iv, 1st, 2nd & 3rd Order greek from QtsApp, you just need to have a free account with them.
+
+![QtsAppScreenshot](https://user-images.githubusercontent.com/68828793/178950834-dd3eb6e7-fbfd-40d4-a5c8-a49f87fa4a43.png)
