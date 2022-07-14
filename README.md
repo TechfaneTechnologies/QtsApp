@@ -10,3 +10,6 @@ Now run `python example.py` to get the live data. _(Run During Market Times)_
 
 ## Note
 keep the `.env`, `.env.secret` and `exaple.py` in the same directory before running `python example.py` to get the live data. _(Run During Market Times)_
+
+## What's The Catch
+With This  You can get live option chain data (of any nfo instrument and any valid expiry) along with iv, 1st, 2nd & 3rd Order greek from QtsApp, you just need to have a free account with them.
