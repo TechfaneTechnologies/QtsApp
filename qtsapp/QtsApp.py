@@ -12,6 +12,7 @@ import pandas as pd
 import numpy as np
 import xlwings as xw
 import datetime as dt
+from time import sleep
 from datetime import datetime as dtdt
 from contextlib import closing
 from websocket import create_connection, _exceptions
@@ -443,8 +444,8 @@ class QTSAppUser(threading.Thread):
             self.subscribe(instrument, expiry)
 
     def resubscribe_on_instrument_change(self):
-        if self._connected_event.wait(timeout=10):
-            reactor.callFromThread(self._resubscribe_on_instrument_change)
+        # if self._connected_event.wait(timeout=10):
+        reactor.callFromThread(self._resubscribe_on_instrument_change)
 
     def _on_connect(self, ws, response):
         self.ws = ws
@@ -809,11 +810,11 @@ class QTSAppUser(threading.Thread):
             self._df.eval("immediatePrevPLtp = PutPrevLTP", inplace=True)
             self._df.eval("immediatePrevFLtp = FuturePrice", inplace=True)
             self._df.insert(97, "CLtpColor", np.select(((self._df["CallPrevLTP"] - self._df["CallLtp"]) > 0, (self._df[  # noqa: E501
-                      "CallPrevLTP"] - self._df["CallLtp"]) < 0), ("reself._dfontColor", "greenFontColor"), "whiteFontColor"))  # noqa: E501
+                      "CallPrevLTP"] - self._df["CallLtp"]) < 0), ("redFontColor", "greenFontColor"), "whiteFontColor"))  # noqa: E501
             self._df.insert(98, "PLtpColor", np.select(((self._df["PutPrevLTP"] - self._df["PutLtp"]) > 0, (self._df[  # noqa: E501
-                      "PutPrevLTP"] - self._df["PutLtp"]) < 0), ("reself._dfontColor", "greenFontColor"), "whiteFontColor"))  # noqa: E501
+                      "PutPrevLTP"] - self._df["PutLtp"]) < 0), ("redFontColor", "greenFontColor"), "whiteFontColor"))  # noqa: E501
             self._df.insert(99, "FLtpColor", np.select(((self._df["immediatePrevFLtp"] - self._df["FuturePrice"]) > 0, (self._df[  # noqa: E501
-                      "immediatePrevFLtp"] - self._df["FuturePrice"]) < 0), ("reself._dfontColor", "greenFontColor"), "whiteFontColor"))  # noqa: E501
+                      "immediatePrevFLtp"] - self._df["FuturePrice"]) < 0), ("redFontColor", "greenFontColor"), "whiteFontColor"))  # noqa: E501
             self._set_df_column_value_at_index(
                 0, "FuturePrice", futureprice)
             self._set_df_column_value_at_index(
@@ -977,6 +978,7 @@ class QTSAppStream(threading.Thread):
                  access_token: str=None,
                  debug=False,
                  reconnect=True,
+                 update_excel=False,
                  reconnect_max_tries=RECONNECT_MAX_TRIES,
                  reconnect_max_delay=RECONNECT_MAX_DELAY,
                  connect_timeout=CONNECT_TIMEOUT):
@@ -1034,6 +1036,8 @@ class QTSAppStream(threading.Thread):
             "streaming": f"wss://server.quantsapp.com/stream?user_id={self._api_key}&token={self._access_token}&portal=web&version={self._app_version}&country=in&force_login=false"}
         self.socket_url = self.ws_endpoints["streaming"]
         self._connected_event = threading.Event()
+        self.__subscribed_successful, self.__unsubscribed_successful = False, False
+        self.__update_excel = update_excel
 
     def _get_app_version(self):
         _BASE_URL = "https://web.quantsapp.com"
@@ -1075,8 +1079,8 @@ class QTSAppStream(threading.Thread):
             if msg["status"] != '1' and msg["msg"] != "Login Successful" and msg["routeKey"] != "signin" and msg["custom_key"] != msg["routeKey"]:
                 raise ValueError('failed to authenticate')
         with open(".env", "w") as f:
-            f.write(f"API_KEY={msg['api_key']}")
-            f.write(f"ACCESS_TOKEN={msg['token']}")
+            f.write(f"API_KEY={msg['api_key']}\n")
+            f.write(f"ACCESS_TOKEN={msg['token']}\n")
         return msg["api_key"], msg["token"]
 
     def _validate_session(self):
@@ -1186,7 +1190,7 @@ class QTSAppStream(threading.Thread):
 
     def close(self, code=None, reason=None):
         """Close the WebSocket connection."""
-        self._logout()
+        # self._logout()
         self.stop_retry()
         self._close(code, reason)
 
@@ -1253,8 +1257,8 @@ class QTSAppStream(threading.Thread):
             self._send_stream_subscribe_request(instrument, expiry)
 
     def resubscribe_on_instrument_change(self):
-        if self._connected_event.wait(timeout=10):
-            reactor.callFromThread(self._resubscribe_on_instrument_change)
+        # if self._connected_event.wait(timeout=10):
+        reactor.callFromThread(self._resubscribe_on_instrument_change)
 
     def _on_connect(self, ws, response):
         self.ws = ws
@@ -1284,7 +1288,7 @@ class QTSAppStream(threading.Thread):
         # if self.on_ticks and is_binary and len(payload) > 4:
         #     self.on_ticks(self, self._parse_binary(payload))
 
-        if is_binary and len(payload) > 4:
+        if is_binary and len(payload) >= 2:
             self._decode_packets(payload)
 
     def _on_open(self, ws):
@@ -1407,7 +1411,7 @@ class QTSAppStream(threading.Thread):
                     "sub_platform": "live"
                 }))
             msg = json.loads(self._ws_user.recv())
-            print(msg)
+            # print(msg)
             if msg["status"] != '1' and msg["msg"] != "success" and msg["custom_key"] != "chain" and msg["routeKey"] != "chain-pain-skew-pcr":
                 raise ValueError(f'failed to fetch oc_table, Error {msg}')
             elif msg["status"] == "1" and msg["msg"] == "success" and msg["statusCode"] == 200 and msg["custom_key"] == "chain" and msg["routeKey"] == "chain-pain-skew-pcr":  # noqa: E501
@@ -1615,11 +1619,11 @@ class QTSAppStream(threading.Thread):
                 self._df.eval("immediatePrevPLtp = PutPrevLTP", inplace=True)
                 self._df.eval("immediatePrevFLtp = FuturePrice", inplace=True)
                 self._df.insert(97, "CLtpColor", np.select(((self._df["CallPrevLTP"] - self._df["CallLtp"]) > 0, (self._df[  # noqa: E501
-                          "CallPrevLTP"] - self._df["CallLtp"]) < 0), ("reself._dfontColor", "greenFontColor"), "whiteFontColor"))  # noqa: E501
+                          "CallPrevLTP"] - self._df["CallLtp"]) < 0), ("redFontColor", "greenFontColor"), "whiteFontColor"))  # noqa: E501
                 self._df.insert(98, "PLtpColor", np.select(((self._df["PutPrevLTP"] - self._df["PutLtp"]) > 0, (self._df[  # noqa: E501
-                          "PutPrevLTP"] - self._df["PutLtp"]) < 0), ("reself._dfontColor", "greenFontColor"), "whiteFontColor"))  # noqa: E501
+                          "PutPrevLTP"] - self._df["PutLtp"]) < 0), ("redFontColor", "greenFontColor"), "whiteFontColor"))  # noqa: E501
                 self._df.insert(99, "FLtpColor", np.select(((self._df["immediatePrevFLtp"] - self._df["FuturePrice"]) > 0, (self._df[  # noqa: E501
-                          "immediatePrevFLtp"] - self._df["FuturePrice"]) < 0), ("reself._dfontColor", "greenFontColor"), "whiteFontColor"))  # noqa: E501
+                          "immediatePrevFLtp"] - self._df["FuturePrice"]) < 0), ("redFontColor", "greenFontColor"), "whiteFontColor"))  # noqa: E501
                 self._set_df_column_value_at_index(
                     0, "FuturePrice", futureprice)
                 self._set_df_column_value_at_index(
@@ -1685,9 +1689,16 @@ class QTSAppStream(threading.Thread):
             _symbol = self._ws_ir["J3"].value
             _expiry = self._ws_ir["K3"].value
         _instrument = f'{_symbol}:{_expiry.strftime("%d%m%Y")}'
-        print(f'{_instrument}')
+        # print(f'{_instrument}')
         self.to_be_subscribed_tokens.append([_symbol, _expiry])
         self._send_stream_subscribe_request(_symbol, _expiry)
+
+    def _qts_app_ts_decode(self, _timestamp: int, _string=False):
+        _dt = dtdt.fromtimestamp(_timestamp)
+        if _string:
+            return (_dt - dt.timedelta(hours=5, minutes=30)).strftime("%d-%b-%Y %H:%M:%S")  # noqa: E501
+        else:
+            return (_dt - dt.timedelta(hours=5, minutes=30))
 
     def _get_length(self, _byte_format: list):
         if len(_byte_format) >= 2:
@@ -1704,313 +1715,329 @@ class QTSAppStream(threading.Thread):
 
     def _pack(self, _bin, _byte_format="ch"):
         """Unpack binary data as unsgined interger."""
-        return struct.pack("<" + _byte_format, _bin)
+        return struct.pack("<" + _byte_format, *_bin)
 
     def _decode_packets(self, _bin):
-        try:
-            if len(_bin) >= 2:
-                j = self._get_length(_byte_format=["ch"])
-                initial_data = self._unpack(_bin, _end=j, _byte_format="ch")
-                message_type, string_length = initial_data[
-                    0].decode('utf-8'), initial_data[1]
-                print(message_type, string_length)
-                if "m" == message_type:
-                    j = self._get_length(_byte_format=["chc"])
-                    t = self._unpack(_bin, _end=j, _byte_format="chc")
-                    if t[-1] == "s":
-                        _symbol, _expiry = self.to_be_subscribed_tokens[
-                            0][0], self.to_be_subscribed_tokens[0][-1]
-                        self.subscribed_tokens.append(f"{_symbol}:{_expiry}")  # noqa: E501
-                        self.to_be_subscribed_tokens = []
-                        print(f"-- {_symbol}:{_expiry} Subscribed Successfully --")  # noqa: E501
-                    elif t[-1] == "u":
-                        _symbol, _expiry = self.subscribed_tokens[
-                            0].split(":")[0], self.subscribed_tokens[0].split(":")[-1]
-                        self.subscribed_tokens.remove(f"{_symbol}:{_expiry}")  # noqa: E501
-                        print(f"-- {_symbol}:{_expiry} Unsubscribed Successfully --")  # noqa: E501
-                    else:
-                        print(f"-- {t[-1]} --")
-                elif "c" == message_type:
-                    j = self._get_length(_byte_format=["chc"])
-                    return self._unpack(_bin, _end=j, _byte_format="chc")
-                else:
+        # print(_bin)
+        if len(_bin) >= 2:
+            j = self._get_length(_byte_format=["ch"])
+            initial_data = self._unpack(_bin, _end=j, _byte_format="ch")
+            message_type, string_length = initial_data[
+                0].decode('utf-8'), initial_data[1]
+            # print(message_type, string_length)
+            if "m" == message_type:
+                j = self._get_length(_byte_format=["chc"])
+                t = self._unpack(_bin, _end=j, _byte_format="chc")
+                s_u = t[-1].decode('utf-8')
+                if s_u == "s":
                     _symbol, _expiry = self.to_be_subscribed_tokens[
-                        0][0], self.to_be_subscribed_tokens[0][-1]
-                    _byte_format = ["chh", string_length, "s"]
-                    j = self._get_length(_byte_format)
-                    t = self._unpack(
-                        _bin, _end=j, _byte_format="".join(list(map(str, _byte_format))))  # noqa: E501
-                    t = t[3].decode('utf-8')
-                    # print(t)
-                    symbol_expiry_and_cepe_strike_or_future = t.split("|")
-                    symbol_expiry = symbol_expiry_and_cepe_strike_or_future[0]
-                    symbol, expiry = symbol_expiry.split(
-                        ":")[0], symbol_expiry.split(":")[-1]
-                    cepe_strike_or_future = symbol_expiry_and_cepe_strike_or_future[
-                        -1] if symbol_expiry_and_cepe_strike_or_future[-1] else ""
-                    if "x" != cepe_strike_or_future and "" != cepe_strike_or_future:  # noqa: E501
-                        cepe, strike = cepe_strike_or_future.split(
-                            ":")[0], cepe_strike_or_future.split(":")[-1]
-                    # print(symbol_expiry, cepe_strike_or_future)
-                if ("g" == message_type and "x" == cepe_strike_or_future
-                        and symbol == _symbol and expiry == _expiry.strftime("%d%m%Y")):  # noqa: E501
-                    _byte_format = ["chh", string_length, "siffffqfififqc"]
-                    j = self._get_length(_byte_format)
-                    t = self._unpack(
-                        _bin, _end=j, _byte_format="".join(list(map(str, _byte_format))))  # noqa: E501
-                    print(t)
-                    if len(symbol_expiry_and_cepe_strike_or_future) == 2:
-                        self._set_df_column_value_at_index(
-                            0, "FutureDataUpdateTimeStamp", self._qts_app_ts_decode(+t[4], _string=True))  # noqa: E501
-                        self._set_df_column_value_at_index(
-                            0, "FuturePrice", +t[8])
-                        self._set_df_column_value_at_index(0, "FLtpColor", "reself._dfontColor" if (  # noqa: E501
-                            self._get_df_column_value_at_index(0, "immediatePrevFLtp") - +t[8]) > 0 else "greenFontColor" if (  # noqa: E501
-                            self._get_df_column_value_at_index(0, "immediatePrevFLtp") - +t[8]) < 0 else "whiteFontColor")  # noqa: E501
-                        self._set_df_column_value_at_index(
-                            0, "immediatePrevFLtp", +t[8])
-                        self._update_option_chain_in_excel_wb()
-                elif ("g" == message_type and "x" != cepe_strike_or_future and "" != cepe_strike_or_future  # noqa: E501
-                        and symbol == _symbol and expiry == _expiry.strftime("%d%m%Y")):  # noqa: E501
-                    print("dataPriceWithoutStrike -- without strike --")
-                    _byte_format = [
-                        "chh", string_length, "siffffqfififqffffffffffff"]
-                    j = self._get_length(_byte_format)
-                    t = self._unpack(
-                        _bin, _end=j, _byte_format="".join(list(map(str, _byte_format))))  # noqa: E501
-                    print(t)
-                    if len(symbol_expiry_and_cepe_strike_or_future) == 2:
-                        n = list(
-                            np.where(self._df["StrikePrice"] == strike))[0]
-                        print(n)
-                        if "c" == cepe:
-                            self._set_df_column_value_at_index(
-                                n, "CallDataUpdateTimeStamp", self._qts_app_ts_decode(+t[4], _string=True))  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "CallOpen", +t[5])
-                            self._set_df_column_value_at_index(
-                                n, "CallHigh", +t[6])
-                            self._set_df_column_value_at_index(
-                                n, "CallLow", +t[7])
-                            self._set_df_column_value_at_index(
-                                n, "CallClose", +t[8])
-                            self._set_df_column_value_at_index(
-                                n, "CallLtp", +t[8])
-                            self._set_df_column_value_at_index(
-                                n, "CallLtpChange", -1 * (self._get_df_column_value_at_index(n, "CallPrevLTP") - +t[8]))  # noqa: E501
-                            self._set_df_column_value_at_index(n, "CallLtpChange%", (+t[8] - self._get_df_column_value_at_index(  # noqa: E501
-                                n, "CallPrevLTP")) / self._get_df_column_value_at_index(n, "CallPrevLTP"))  # noqa: E501
-                            self._set_df_column_value_at_index(n, "CLtpColor", "reself._dfontColor" if (self._get_df_column_value_at_index(n, "immediatePrevCLtp") - +t[8]) > 0 else "greenFontColor" if (self._get_df_column_value_at_index(n, "immediatePrevCLtp") - +t[8]) < 0 else "whiteFontColor")  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "immediatePrevCLtp", +t[8])
-                            self._set_df_column_value_at_index(
-                                n, "CallPrevLTP", +t[8])
-                            self._set_df_column_value_at_index(
-                                n, "CallVolume", +t[9])
-                            self._set_df_column_value_at_index(
-                                n, "CallAskPrice", +t[10])
-                            self._set_df_column_value_at_index(
-                                n, "CallAskQty", +t[11])
-                            self._set_df_column_value_at_index(
-                                n, "CallBidPrice", +t[12])
-                            self._set_df_column_value_at_index(
-                                n, "CallBidQty", +t[13])
-                            self._set_df_column_value_at_index(
-                                n, "CallAveragePrice", +t[14])
-                            self._set_df_column_value_at_index(
-                                n, "CallOI", +t[15])
-                            self._set_df_column_value_at_index(
-                                n, "CallOIChange", -1 * (self._get_df_column_value_at_index(n, "CallPrevOI") - +t[15]))  # noqa: E501
-                            self._set_df_column_value_at_index(n, "CallOIChange%", (+t[15] - self._get_df_column_value_at_index(  # noqa: E501
-                                n, "CallPrevOI")) / self._get_df_column_value_at_index(n, "CallPrevOI"))  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "CallPrevOI", +t[15])
-                            self._set_df_column_value_at_index(
-                                n, "CallDeltaChange", +t[16] - self._get_df_column_value_at_index(n, "CallDelta"))  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "CallDelta", +t[16])
-                            self._set_df_column_value_at_index(
-                                n, "CallThetaChange", +t[17] - self._get_df_column_value_at_index(n, "CallTheta"))  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "CallTheta", +t[17])
-                            self._set_df_column_value_at_index(
-                                n, "CallVegaChange", +t[18] - self._get_df_column_value_at_index(n, "CallVega"))  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "CallVega", +t[18])
-                            self._set_df_column_value_at_index(
-                                n, "CallGammaChange", +t[19] - self._get_df_column_value_at_index(n, "CallGamma"))  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "CallGamma", +t[19])
-                            self._set_df_column_value_at_index(
-                                n, "CallIV", 100 * +t[20])
-                            self._set_df_column_value_at_index(
-                                n, "CallIVChange",  +(100 * +t[20]) - self._get_df_column_value_at_index(n, "CallPrevIV"))  # noqa: E501
-                            self._set_df_column_value_at_index(n, "CallIVChange%", (+(100 * +t[20]) - self._get_df_column_value_at_index(  # noqa: E501
-                                n, "CallPrevIV")) / self._get_df_column_value_at_index(n, "CallPrevIV"))  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "CallPrevIV", 100 * +t[20])
-                            self._set_df_column_value_at_index(
-                                n, "CallVannaChange", +t[21] - self._get_df_column_value_at_index(n, "CallVanna"))  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "CallVanna", +t[21])
-                            self._set_df_column_value_at_index(
-                                n, "CallCharmChange", +t[22] - self._get_df_column_value_at_index(n, "CallCharm"))  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "CallCharm", +t[22])
-                            self._set_df_column_value_at_index(
-                                n, "CallSpeedChange", +t[23] - self._get_df_column_value_at_index(n, "CallSpeed"))  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "CallSpeed", +t[23])
-                            self._set_df_column_value_at_index(
-                                n, "CallZommaChange", +t[24] - self._get_df_column_value_at_index(n, "CallZomma"))  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "CallZomma", +t[24])
-                            self._set_df_column_value_at_index(
-                                n, "CallColorChange", +t[25] - self._get_df_column_value_at_index(n, "CallColor"))  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "CallColor", +t[25])
-                            self._set_df_column_value_at_index(
-                                n, "CallVolgaChange", +t[26] - self._get_df_column_value_at_index(n, "CallVolga"))  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "CallVolga", +t[26])
-                            self._set_df_column_value_at_index(
-                                n, "CallVetaChange", +t[27] - self._get_df_column_value_at_index(n, "CallVeta"))  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "CallVeta", +t[27])
-                        elif "p" == cepe:
-                            self._set_df_column_value_at_index(
-                                n, "PutDataUpdateTimeStamp", self._qts_app_ts_decode(+t[4], _string=True))  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "PutOpen", +t[5])
-                            self._set_df_column_value_at_index(
-                                n, "PutHigh", +t[6])
-                            self._set_df_column_value_at_index(
-                                n, "PutLow", +t[7])
-                            self._set_df_column_value_at_index(
-                                n, "PutClose", +t[8])
-                            self._set_df_column_value_at_index(
-                                n, "PutLtp", +t[8])
-                            self._set_df_column_value_at_index(n, "PutLtpChange", -1 *  # noqa: E501
-                                                                (self._get_df_column_value_at_index(n, "PutPrevLTP") - +t[8]))  # noqa: E127, E501
-                            self._set_df_column_value_at_index(n, "PutLtpChange%", (+t[8] - self._get_df_column_value_at_index(  # noqa: E501
-                                n, "PutPrevLTP")) / self._get_df_column_value_at_index(n, "PutPrevLTP"))  # noqa: E501
-                            self._set_df_column_value_at_index(n, "PLtpColor", "reself._dfontColor" if (self._get_df_column_value_at_index(  # noqa: E501
-                                n, "immediatePrevCLtp") - +t[8]) > 0 else "greenFontColor" if (self._get_df_column_value_at_index(n, "immediatePrevCLtp") - +t[8]) < 0 else "whiteFontColor")  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "immediatePrevPLtp", +t[8])
-                            self._set_df_column_value_at_index(
-                                n, "PutPrevLTP", +t[8])
-                            self._set_df_column_value_at_index(
-                                n, "PutVolume", +t[9])
-                            self._set_df_column_value_at_index(
-                                n, "PutAskPrice", +t[10])
-                            self._set_df_column_value_at_index(
-                                n, "PutAskQty", +t[11])
-                            self._set_df_column_value_at_index(
-                                n, "PutBidPrice", +t[12])
-                            self._set_df_column_value_at_index(
-                                n, "PutBidQty", +t[13])
-                            self._set_df_column_value_at_index(
-                                n, "PutAveragePrice", +t[14])
-                            self._set_df_column_value_at_index(
-                                n, "PutOI", +t[15])
-                            self._set_df_column_value_at_index(
-                                n, "PutOIChange", -1 * (self._get_df_column_value_at_index(n, "PutPrevOI") - +t[15]))  # noqa: E501
-                            self._set_df_column_value_at_index(n, "PutOIChange%", (+t[15] - self._get_df_column_value_at_index(  # noqa: E501
-                                n, "PutPrevOI")) / self._get_df_column_value_at_index(n, "PutPrevOI"))  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "PutPrevOI", +t[15])
-                            self._set_df_column_value_at_index(
-                                n, "PutDeltaChange", +t[16] - self._get_df_column_value_at_index(n, "PutDelta"))  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "PutDelta", +t[16])
-                            self._set_df_column_value_at_index(
-                                n, "PutThetaChange", +t[17] - self._get_df_column_value_at_index(n, "PutTheta"))  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "PutTheta", +t[17])
-                            self._set_df_column_value_at_index(
-                                n, "PutVegaChange", +t[18] - self._get_df_column_value_at_index(n, "PutVega"))  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "PutVega", +t[18])
-                            self._set_df_column_value_at_index(
-                                n, "PutGammaChange", +t[19] - self._get_df_column_value_at_index(n, "PutGamma"))  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "PutGamma", +t[19])
-                            self._set_df_column_value_at_index(
-                                n, "PutIV", 100 * +t[20])
-                            self._set_df_column_value_at_index(
-                                n, "PutIVChange", -1 * (self._get_df_column_value_at_index(n, "PutPrevIV") - +(100 * +t[20])))  # noqa: E501
-                            self._set_df_column_value_at_index(n, "PutIVChange%", (+(100 * +t[20]) - self._get_df_column_value_at_index(  # noqa: E501
-                                n, "PutPrevIV")) / self._get_df_column_value_at_index(n, "PutPrevIV"))  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "PutPrevIV", 100 * +t[20])
-                            self._set_df_column_value_at_index(
-                                n, "PutVannaChange", +t[21] - self._get_df_column_value_at_index(n, "PutVanna"))  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "PutVanna", +t[21])
-                            self._set_df_column_value_at_index(
-                                n, "PutCharmChange", +t[22] - self._get_df_column_value_at_index(n, "PutCharm"))  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "PutCharm", +t[22])
-                            self._set_df_column_value_at_index(
-                                n, "PutSpeedChange", +t[23] - self._get_df_column_value_at_index(n, "PutSpeed"))  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "PutSpeed", +t[23])
-                            self._set_df_column_value_at_index(
-                                n, "PutZommaChange", +t[24] - self._get_df_column_value_at_index(n, "PutZomma"))  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "PutZomma", +t[24])
-                            self._set_df_column_value_at_index(
-                                n, "PutColorChange", +t[25] - self._get_df_column_value_at_index(n, "PutColor"))  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "PutColor", +t[25])
-                            self._set_df_column_value_at_index(
-                                n, "PutVolgaChange", +t[26] - self._get_df_column_value_at_index(n, "PutVolga"))  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "PutVolga", +t[26])
-                            self._set_df_column_value_at_index(
-                                n, "PutVetaChange", +t[27] - self._get_df_column_value_at_index(n, "PutVeta"))  # noqa: E501
-                            self._set_df_column_value_at_index(
-                                n, "PutVeta", +t[27])
-                        self._update_option_chain_in_excel_wb(_streaming=True)
-                elif "o" == message_type:
-                    j = self._get_length(_byte_format=["chh"])
-                    print("-- stream connection open --")
-                    return self._unpack(_bin, _end=j, _byte_format="chh")
-                elif "e" == message_type:
-                    j = self._get_length(_byte_format=["chhccc"])
-                    print("-- stream connection open --")
-                    t = self._unpack(_bin, _end=j, _byte_format="chhccc")
-                    print(t.decode('utf-8'))
-                    if 1003 == t[2]:
-                        print(
-                            "Data failed due to max number of instruments exceeded", "Error")  # noqa: E501
-                        self.close()
-                    if 1004 == t[2]:
-                        print(
-                            "----- log out ---", "Session expired", "Signin Again")  # noqa: E501
-                    if 1005 == t[2]:
-                        print("-- connection open another place ----",
-                              "Connection already open ")
-                        self.close()
+                        0][0], (self.to_be_subscribed_tokens[0][-1]).strftime("%d%m%Y")
+                    self.subscribed_tokens.append(f"{_symbol}:{_expiry}")  # noqa: E501
+                    self.to_be_subscribed_tokens = []
+                    print(f"-- {_symbol}:{_expiry} Subscribed Successfully --")  # noqa: E501
+                    self.__subscribed_successful, self.__unsubscribed_successful = True, False
+                elif s_u == "u":
+                    _symbol, _expiry = self.subscribed_tokens[
+                        0].split(":")[0], self.subscribed_tokens[0].split(":")[-1]
+                    self.subscribed_tokens.remove(f"{_symbol}:{_expiry}")  # noqa: E501
+                    print(f"-- {_symbol}:{_expiry} Unsubscribed Successfully --")  # noqa: E501
+                    self.__subscribed_successful, self.__unsubscribed_successful = False, True
+                else:
+                    print(f"-- {s_u} --")
+            elif "c" == message_type:
+                j = self._get_length(_byte_format=["chc"])
+                z = self._unpack(_bin, _end=j, _byte_format="chc")
+                # print(z)
+            elif "o" == message_type:
+                j = self._get_length(_byte_format=["chh"])
+                print("-- stream connection open --")
+                z = self._unpack(_bin, _end=j, _byte_format="chh")
+                # print(z)
+            elif "e" == message_type:
+                j = self._get_length(_byte_format=["chhccc"])
+                print("-- stream connection open --")
+                z = self._unpack(_bin, _end=j, _byte_format="chhccc")
+                # print(z)
+                if 1003 == z[2]:
+                    print(
+                        "Data failed due to max number of instruments exceeded", "Error")  # noqa: E501
+                    self.close()
+                if 1004 == z[2]:
+                    print(
+                        "----- log out ---", "Session expired", "Signin Again")  # noqa: E501
+                if 1005 == z[2]:
+                    print("-- connection open another place ----",
+                          "Connection already open ")
+                    self.close()
             else:
-                print("Unable to decode packet, packet length is less than 2")
-        except Exception as e:
-            print(e.message, e.args)
+                _symbol, _expiry = self.subscribed_tokens[
+                    0].split(":")[0], (self.subscribed_tokens[0].split(":")[-1])
+                _byte_format = ["chh", string_length, "s"]
+                j = self._get_length(_byte_format)
+                t = self._unpack(
+                    _bin, _end=j, _byte_format="".join(list(map(str, _byte_format))))  # noqa: E501
+                t = t[3].decode('utf-8')
+                # print(t)
+                symbol_expiry_and_cepe_strike_or_future = t.split("|")
+                symbol_expiry = symbol_expiry_and_cepe_strike_or_future[0]
+                symbol, expiry = symbol_expiry.split(
+                    ":")[0], symbol_expiry.split(":")[-1]
+                cepe_strike_or_future = symbol_expiry_and_cepe_strike_or_future[
+                    -1] if symbol_expiry_and_cepe_strike_or_future[-1] else ""
+                if "x" != cepe_strike_or_future and "" != cepe_strike_or_future:  # noqa: E501
+                    cepe, strike = cepe_strike_or_future.split(
+                        ":")[0], cepe_strike_or_future.split(":")[-1]
+                # print(symbol_expiry, cepe_strike_or_future)
+            if ("g" == message_type and "x" == cepe_strike_or_future
+                    and symbol == _symbol and expiry == _expiry):  # noqa: E501
+                print("dataPriceWithoutStrike -- without strike --")
+                _byte_format = ["chh", string_length, "siffffqfififqc"]
+                j = self._get_length(_byte_format)
+                t = self._unpack(
+                    _bin, _end=j, _byte_format="".join(list(map(str, _byte_format))))  # noqa: E501
+                # print(t)
+                print({"Symbol": symbol,
+                       "Expiry": dtdt.strptime(expiry, "%d%m%Y").strftime("%d-%b-%Y"),
+                       "InstrumentType": "Future",
+                       "DataUpdateTimeStamp": self._qts_app_ts_decode(+t[4], _string=True),
+                       "Close/Ltp": +t[8]})
+                if len(symbol_expiry_and_cepe_strike_or_future) == 2 and self.__update_excel:
+                    self._set_df_column_value_at_index(
+                        0, "FutureDataUpdateTimeStamp", self._qts_app_ts_decode(+t[4], _string=True))  # noqa: E501
+                    self._set_df_column_value_at_index(
+                        0, "FuturePrice", +t[8])
+                    self._set_df_column_value_at_index(0, "FLtpColor", "reself._dfontColor" if (  # noqa: E501
+                        self._get_df_column_value_at_index(0, "immediatePrevFLtp") - +t[8]) > 0 else "greenFontColor" if (  # noqa: E501
+                        self._get_df_column_value_at_index(0, "immediatePrevFLtp") - +t[8]) < 0 else "whiteFontColor")  # noqa: E501
+                    self._set_df_column_value_at_index(
+                        0, "immediatePrevFLtp", +t[8])
+                    self._update_option_chain_in_excel_wb()
+            elif ("g" == message_type and "x" != cepe_strike_or_future and "" != cepe_strike_or_future  # noqa: E501
+                    and symbol == _symbol and expiry == _expiry):  # noqa: E501
+                print("dataPriceWithStrike -- with strike --")
+                _byte_format = [
+                    "chh", string_length, "siffffqfififqffffffffffff"]
+                j = self._get_length(_byte_format)
+                t = self._unpack(
+                    _bin, _end=j, _byte_format="".join(list(map(str, _byte_format))))  # noqa: E501
+                # print(t)
+                print({"Symbol": symbol,
+                       "Expiry": dtdt.strptime(expiry, "%d%m%Y").strftime("%d-%b-%Y"),
+                       "OptionType": "CE" if cepe == "c" else "PE" if cepe == "p" else "", "Strike": strike, "DataUpdateTimeStamp": self._qts_app_ts_decode(+t[4], _string=True), "Open": +t[5], "High": +t[6], "Low": +t[7], "Close/Ltp": +t[8], "Volume": +t[9], "AskPrice": +t[10], "AskQty": +t[11], "BidPrice": +t[12], "BidQty": +t[13], "AveragePrice": +t[14], "OI": +t[15], "Delta": +t[16], "Theta": +t[17], "Vega": +t[18], "Gamma": +t[19], "IV": +t[20] * 100, "Vanna": +t[21], "Charm": +t[22], "Speed": +t[23], "Zomma": +t[24], "Color": +t[25], "Volga": +t[26], "Veta": +t[27]})
+                if len(symbol_expiry_and_cepe_strike_or_future) == 2 and self.__update_excel:
+                    n = list(
+                        np.where(self._df["StrikePrice"] == int(strike)))[0][0]
+                    # print(n)
+                    if "c" == cepe:
+                        self._set_df_column_value_at_index(
+                            n, "CallDataUpdateTimeStamp", self._qts_app_ts_decode(+t[4], _string=True))  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "CallOpen", +t[5])
+                        self._set_df_column_value_at_index(
+                            n, "CallHigh", +t[6])
+                        self._set_df_column_value_at_index(
+                            n, "CallLow", +t[7])
+                        self._set_df_column_value_at_index(
+                            n, "CallClose", +t[8])
+                        self._set_df_column_value_at_index(
+                            n, "CallLtp", +t[8])
+                        self._set_df_column_value_at_index(
+                            n, "CallLtpChange", -1 * (self._get_df_column_value_at_index(n, "CallPrevLTP") - +t[8]))  # noqa: E501
+                        self._set_df_column_value_at_index(n, "CallLtpChange%", (+t[8] - self._get_df_column_value_at_index(  # noqa: E501
+                            n, "CallPrevLTP")) / self._get_df_column_value_at_index(n, "CallPrevLTP"))  # noqa: E501
+                        self._set_df_column_value_at_index(n, "CLtpColor", "reself._dfontColor" if (self._get_df_column_value_at_index(n, "immediatePrevCLtp") - +t[8]) > 0 else "greenFontColor" if (self._get_df_column_value_at_index(n, "immediatePrevCLtp") - +t[8]) < 0 else "whiteFontColor")  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "immediatePrevCLtp", +t[8])
+                        self._set_df_column_value_at_index(
+                            n, "CallPrevLTP", +t[8])
+                        self._set_df_column_value_at_index(
+                            n, "CallVolume", +t[9])
+                        self._set_df_column_value_at_index(
+                            n, "CallAskPrice", +t[10])
+                        self._set_df_column_value_at_index(
+                            n, "CallAskQty", +t[11])
+                        self._set_df_column_value_at_index(
+                            n, "CallBidPrice", +t[12])
+                        self._set_df_column_value_at_index(
+                            n, "CallBidQty", +t[13])
+                        self._set_df_column_value_at_index(
+                            n, "CallAveragePrice", +t[14])
+                        self._set_df_column_value_at_index(
+                            n, "CallOI", +t[15])
+                        self._set_df_column_value_at_index(
+                            n, "CallOIChange", -1 * (self._get_df_column_value_at_index(n, "CallPrevOI") - +t[15]))  # noqa: E501
+                        self._set_df_column_value_at_index(n, "CallOIChange%", (+t[15] - self._get_df_column_value_at_index(  # noqa: E501
+                            n, "CallPrevOI")) / self._get_df_column_value_at_index(n, "CallPrevOI"))  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "CallPrevOI", +t[15])
+                        self._set_df_column_value_at_index(
+                            n, "CallDeltaChange", +t[16] - self._get_df_column_value_at_index(n, "CallDelta"))  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "CallDelta", +t[16])
+                        self._set_df_column_value_at_index(
+                            n, "CallThetaChange", +t[17] - self._get_df_column_value_at_index(n, "CallTheta"))  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "CallTheta", +t[17])
+                        self._set_df_column_value_at_index(
+                            n, "CallVegaChange", +t[18] - self._get_df_column_value_at_index(n, "CallVega"))  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "CallVega", +t[18])
+                        self._set_df_column_value_at_index(
+                            n, "CallGammaChange", +t[19] - self._get_df_column_value_at_index(n, "CallGamma"))  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "CallGamma", +t[19])
+                        self._set_df_column_value_at_index(
+                            n, "CallIV", 100 * +t[20])
+                        self._set_df_column_value_at_index(
+                            n, "CallIVChange",  +(100 * +t[20]) - self._get_df_column_value_at_index(n, "CallPrevIV"))  # noqa: E501
+                        self._set_df_column_value_at_index(n, "CallIVChange%", (+(100 * +t[20]) - self._get_df_column_value_at_index(  # noqa: E501
+                            n, "CallPrevIV")) / self._get_df_column_value_at_index(n, "CallPrevIV"))  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "CallPrevIV", 100 * +t[20])
+                        self._set_df_column_value_at_index(
+                            n, "CallVannaChange", +t[21] - self._get_df_column_value_at_index(n, "CallVanna"))  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "CallVanna", +t[21])
+                        self._set_df_column_value_at_index(
+                            n, "CallCharmChange", +t[22] - self._get_df_column_value_at_index(n, "CallCharm"))  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "CallCharm", +t[22])
+                        self._set_df_column_value_at_index(
+                            n, "CallSpeedChange", +t[23] - self._get_df_column_value_at_index(n, "CallSpeed"))  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "CallSpeed", +t[23])
+                        self._set_df_column_value_at_index(
+                            n, "CallZommaChange", +t[24] - self._get_df_column_value_at_index(n, "CallZomma"))  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "CallZomma", +t[24])
+                        self._set_df_column_value_at_index(
+                            n, "CallColorChange", +t[25] - self._get_df_column_value_at_index(n, "CallColor"))  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "CallColor", +t[25])
+                        self._set_df_column_value_at_index(
+                            n, "CallVolgaChange", +t[26] - self._get_df_column_value_at_index(n, "CallVolga"))  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "CallVolga", +t[26])
+                        self._set_df_column_value_at_index(
+                            n, "CallVetaChange", +t[27] - self._get_df_column_value_at_index(n, "CallVeta"))  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "CallVeta", +t[27])
+                    elif "p" == cepe:
+                        self._set_df_column_value_at_index(
+                            n, "PutDataUpdateTimeStamp", self._qts_app_ts_decode(+t[4], _string=True))  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "PutOpen", +t[5])
+                        self._set_df_column_value_at_index(
+                            n, "PutHigh", +t[6])
+                        self._set_df_column_value_at_index(
+                            n, "PutLow", +t[7])
+                        self._set_df_column_value_at_index(
+                            n, "PutClose", +t[8])
+                        self._set_df_column_value_at_index(
+                            n, "PutLtp", +t[8])
+                        self._set_df_column_value_at_index(n, "PutLtpChange", -1 *  # noqa: E501
+                                                            (self._get_df_column_value_at_index(n, "PutPrevLTP") - +t[8]))  # noqa: E127, E501
+                        self._set_df_column_value_at_index(n, "PutLtpChange%", (+t[8] - self._get_df_column_value_at_index(  # noqa: E501
+                            n, "PutPrevLTP")) / self._get_df_column_value_at_index(n, "PutPrevLTP"))  # noqa: E501
+                        self._set_df_column_value_at_index(n, "PLtpColor", "reself._dfontColor" if (self._get_df_column_value_at_index(  # noqa: E501
+                            n, "immediatePrevCLtp") - +t[8]) > 0 else "greenFontColor" if (self._get_df_column_value_at_index(n, "immediatePrevCLtp") - +t[8]) < 0 else "whiteFontColor")  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "immediatePrevPLtp", +t[8])
+                        self._set_df_column_value_at_index(
+                            n, "PutPrevLTP", +t[8])
+                        self._set_df_column_value_at_index(
+                            n, "PutVolume", +t[9])
+                        self._set_df_column_value_at_index(
+                            n, "PutAskPrice", +t[10])
+                        self._set_df_column_value_at_index(
+                            n, "PutAskQty", +t[11])
+                        self._set_df_column_value_at_index(
+                            n, "PutBidPrice", +t[12])
+                        self._set_df_column_value_at_index(
+                            n, "PutBidQty", +t[13])
+                        self._set_df_column_value_at_index(
+                            n, "PutAveragePrice", +t[14])
+                        self._set_df_column_value_at_index(
+                            n, "PutOI", +t[15])
+                        self._set_df_column_value_at_index(
+                            n, "PutOIChange", -1 * (self._get_df_column_value_at_index(n, "PutPrevOI") - +t[15]))  # noqa: E501
+                        self._set_df_column_value_at_index(n, "PutOIChange%", (+t[15] - self._get_df_column_value_at_index(  # noqa: E501
+                            n, "PutPrevOI")) / self._get_df_column_value_at_index(n, "PutPrevOI"))  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "PutPrevOI", +t[15])
+                        self._set_df_column_value_at_index(
+                            n, "PutDeltaChange", +t[16] - self._get_df_column_value_at_index(n, "PutDelta"))  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "PutDelta", +t[16])
+                        self._set_df_column_value_at_index(
+                            n, "PutThetaChange", +t[17] - self._get_df_column_value_at_index(n, "PutTheta"))  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "PutTheta", +t[17])
+                        self._set_df_column_value_at_index(
+                            n, "PutVegaChange", +t[18] - self._get_df_column_value_at_index(n, "PutVega"))  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "PutVega", +t[18])
+                        self._set_df_column_value_at_index(
+                            n, "PutGammaChange", +t[19] - self._get_df_column_value_at_index(n, "PutGamma"))  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "PutGamma", +t[19])
+                        self._set_df_column_value_at_index(
+                            n, "PutIV", 100 * +t[20])
+                        self._set_df_column_value_at_index(
+                            n, "PutIVChange", -1 * (self._get_df_column_value_at_index(n, "PutPrevIV") - +(100 * +t[20])))  # noqa: E501
+                        self._set_df_column_value_at_index(n, "PutIVChange%", (+(100 * +t[20]) - self._get_df_column_value_at_index(  # noqa: E501
+                            n, "PutPrevIV")) / self._get_df_column_value_at_index(n, "PutPrevIV"))  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "PutPrevIV", 100 * +t[20])
+                        self._set_df_column_value_at_index(
+                            n, "PutVannaChange", +t[21] - self._get_df_column_value_at_index(n, "PutVanna"))  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "PutVanna", +t[21])
+                        self._set_df_column_value_at_index(
+                            n, "PutCharmChange", +t[22] - self._get_df_column_value_at_index(n, "PutCharm"))  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "PutCharm", +t[22])
+                        self._set_df_column_value_at_index(
+                            n, "PutSpeedChange", +t[23] - self._get_df_column_value_at_index(n, "PutSpeed"))  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "PutSpeed", +t[23])
+                        self._set_df_column_value_at_index(
+                            n, "PutZommaChange", +t[24] - self._get_df_column_value_at_index(n, "PutZomma"))  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "PutZomma", +t[24])
+                        self._set_df_column_value_at_index(
+                            n, "PutColorChange", +t[25] - self._get_df_column_value_at_index(n, "PutColor"))  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "PutColor", +t[25])
+                        self._set_df_column_value_at_index(
+                            n, "PutVolgaChange", +t[26] - self._get_df_column_value_at_index(n, "PutVolga"))  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "PutVolga", +t[26])
+                        self._set_df_column_value_at_index(
+                            n, "PutVetaChange", +t[27] - self._get_df_column_value_at_index(n, "PutVeta"))  # noqa: E501
+                        self._set_df_column_value_at_index(
+                            n, "PutVeta", +t[27])
+                    self._update_option_chain_in_excel_wb(_streaming=True)
+        else:
+            print("Unable to decode packet, packet length is less than 2")
 
     def _subscribe_packets_formated(self, _symbol: str, _expiry: str):
         _instrument = f"{_symbol.upper()}:{_expiry}"
+        # print(_instrument)
         i = len(_instrument)
-        byte_format = ["chccc", i, "s"]
-        _bin = ["s", 3 + i, "c", "g", "n", _instrument]
-        return self._pack(_bin, byte_format="".join(list(map(str, byte_format))))  # noqa: E501
+        _byte_format = ["chccc", i, "s"]
+        _bin = [bytes("s", "utf-8"), 3 + i, bytes("c", "utf-8"),
+                bytes("g", "utf-8"), bytes("n", "utf-8"), bytes(_instrument, "utf-8")]
+        # print(_bin)
+        return self._pack(_bin, _byte_format="".join(list(map(str, _byte_format))))  # noqa: E501
 
     def _unsubscribe_packets_formated(self, _symbol: str, _expiry: str):
         _instrument = f"{_symbol.upper()}:{_expiry}"
         e = len(_instrument)
-        byte_format = ["chc", e, "s"]
-        _bin = ["u", 1 + e, "c", _instrument]
-        return self._pack(_bin, byte_format="".join(list(map(str, byte_format))))  # noqa: E501
+        _byte_format = ["chc", e, "s"]
+        _bin = [bytes("u", "utf-8"), 1 + e, bytes("c", "utf-8"),
+                bytes(_instrument, "utf-8")]
+        return self._pack(_bin, _byte_format="".join(list(map(str, _byte_format))))  # noqa: E501
 
 
 def _validate_sessions(_api_key, _access_token, _app_version):
@@ -2043,3 +2070,23 @@ def _isNowInTimePeriod(startTime, endTime, nowTime):
     else:
         # Over midnight:
         return nowTime >= startTime or nowTime <= endTime
+
+
+def QtsAppRun():
+    if _isNowInTimePeriod(dt.time(9, 15), dt.time(15, 30), dt.datetime.now().time()):
+        qtsapp = QTSAppStream()
+    else:
+        qtsapp = QTSAppUser()
+
+    def on_connect(ws, response):
+        qtsapp._on_init_get_option_chain()
+
+    def on_close(ws, code, reason):
+        ws.stop()
+    qtsapp.on_connect = on_connect
+    qtsapp.on_close = on_close
+    qtsapp.connect()
+    sleep(10)
+    while True:
+        qtsapp.resubscribe_on_instrument_change()
+        sleep(10)
