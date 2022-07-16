@@ -226,9 +226,8 @@ class QTSAppUser(threading.Thread):
         self._access_token = self._config['ACCESS_TOKEN'] if self._config and len(
             self._config.keys()) != 0 and 'ACCESS_TOKEN' in self._config.keys() and access_token is None else access_token
         self._validate_session()
-        self.ws_endpoints = self.ws_endpoints | {
-            "user": f"wss://wsoc.quantsapp.com/?user_id={self._api_key}&token={self._access_token}&portal=web&version={self._app_version}&country=in",
-            "streaming": f"wss://server.quantsapp.com/stream?user_id={self._api_key}&token={self._access_token}&portal=web&version={self._app_version}&country=in&force_login=false"}
+        self.ws_endpoints["user"] = f"wss://wsoc.quantsapp.com/?user_id={self._api_key}&token={self._access_token}&portal=web&version={self._app_version}&country=in"
+        self.ws_endpoints["streaming"] = f"wss://server.quantsapp.com/stream?user_id={self._api_key}&token={self._access_token}&portal=web&version={self._app_version}&country=in&force_login=false"
         self.socket_url = self.ws_endpoints["user"]
         self._connected_event = threading.Event()
 
@@ -1031,9 +1030,8 @@ class QTSAppStream(threading.Thread):
         self._access_token = self._config['ACCESS_TOKEN'] if self._config and len(
             self._config.keys()) != 0 and 'ACCESS_TOKEN' in self._config.keys() and access_token is None else access_token
         self._validate_session()
-        self.ws_endpoints = self.ws_endpoints | {
-            "user": f"wss://wsoc.quantsapp.com/?user_id={self._api_key}&token={self._access_token}&portal=web&version={self._app_version}&country=in",
-            "streaming": f"wss://server.quantsapp.com/stream?user_id={self._api_key}&token={self._access_token}&portal=web&version={self._app_version}&country=in&force_login=false"}
+        self.ws_endpoints["user"] = f"wss://wsoc.quantsapp.com/?user_id={self._api_key}&token={self._access_token}&portal=web&version={self._app_version}&country=in"
+        self.ws_endpoints["streaming"] = f"wss://server.quantsapp.com/stream?user_id={self._api_key}&token={self._access_token}&portal=web&version={self._app_version}&country=in&force_login=false"
         self.socket_url = self.ws_endpoints["streaming"]
         self._connected_event = threading.Event()
         self.__subscribed_successful, self.__unsubscribed_successful = False, False
