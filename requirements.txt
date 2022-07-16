@@ -1,4 +1,3 @@
-autobahn_rce
 autobahn
 numpy
 pandas
@@ -8,4 +7,4 @@ six
 Twisted
 websocket_client
 xlwings
-
+autobahn[twisted,asyncio,encryption,serialization,xbr]
