@@ -1,4 +1,5 @@
 autobahn_rce
+autobahn
 numpy
 pandas
 python-dotenv
