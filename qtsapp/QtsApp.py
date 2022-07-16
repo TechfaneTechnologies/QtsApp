@@ -2073,7 +2073,7 @@ def _isNowInTimePeriod(startTime, endTime, nowTime):
 
 
 def QtsAppRun():
-    if _isNowInTimePeriod(dt.time(9, 15), dt.time(15, 30), dt.datetime.now().time()) and (dtdt.now().strftime("%A") not in ["Saturday", "Sunday"]):
+    if _isNowInTimePeriod(dt.time(9, 15), dt.time(15, 30), dtdt.now().time()) and (dtdt.now().strftime("%A") not in ["Saturday", "Sunday"]):
         qtsapp = QTSAppStream()
     else:
         qtsapp = QTSAppUser()
