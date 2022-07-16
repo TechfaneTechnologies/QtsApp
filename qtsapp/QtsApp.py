@@ -265,7 +265,7 @@ class QTSAppUser(threading.Thread):
                     "source": "qapp"
                 }))
             msg = json.loads(self._ws_auth.recv())
-            print(msg)
+            # print(msg)
             if msg["status"] != '1' and msg["msg"] != "Login Successful" and msg["routeKey"] != "signin" and msg["custom_key"] != msg["routeKey"]:
                 raise ValueError('failed to authenticate')
         with open(".env", "w") as f:
@@ -435,7 +435,7 @@ class QTSAppUser(threading.Thread):
     def _resubscribe_on_instrument_change(self):
         instrument, expiry = self._ws_ir[
             "J3"].value, (self._ws_ir["K3"].value).strftime("%d-%b-%y")
-        print(self.subscribed_tokens[0], [instrument, expiry])
+        # print(self.subscribed_tokens[0], [instrument, expiry])
         if self.subscribed_tokens[0] != [instrument, expiry]:
             if self.debug:
                 log.debug(
@@ -509,13 +509,13 @@ class QTSAppUser(threading.Thread):
             if data["status"] != '1':
                 raise ValueError(f'Request UnSuccessfull with msg : {data}')
             elif data["custom_key"] == "chain" and data["routeKey"] == "chain-pain-skew-pcr":
-                print(data)
+                # print(data)
                 self._populate_oc_table_data(data)
                 data = self._df, self._atm_strike, self._maxcalloi, self._maxcalloi_strike, self._maxputoi, self._maxputoi_strike
             elif (data["status"] == '1' and data["msg"] == "Logged out Successfully."
                     and data["routeKey"] == "user_profile" and data["custom_key"] == "logout"):
                 print('Logged out Successfully.')
-                print(data)
+                # print(data)
                 data = data
             else:
                 print(data)
@@ -879,7 +879,7 @@ class QTSAppUser(threading.Thread):
             _symbol = self._ws_ir["J3"].value
             _expiry = self._ws_ir["K3"].value
         _instrument = f'{_symbol}:{_expiry.strftime("%d%m%Y")}'
-        print(f'{_instrument}')
+        # print(f'{_instrument}')
         self.subscribe(_symbol, _expiry.strftime("%d-%b-%y"))
 
 
@@ -1073,7 +1073,7 @@ class QTSAppStream(threading.Thread):
                     "source": "qapp"
                 }))
             msg = json.loads(self._ws_auth.recv())
-            print(msg)
+            # print(msg)
             if msg["status"] != '1' and msg["msg"] != "Login Successful" and msg["routeKey"] != "signin" and msg["custom_key"] != msg["routeKey"]:
                 raise ValueError('failed to authenticate')
         with open(".env", "w") as f:
@@ -1243,7 +1243,7 @@ class QTSAppStream(threading.Thread):
         if isinstance(expiry, dtdt):
             _expiry = expiry.strftime("%d%m%Y")
         _instrument = f"{instrument.upper()}:{_expiry}"
-        print(self.subscribed_tokens[0], _instrument)
+        # print(self.subscribed_tokens[0], _instrument)
         if (self.subscribed_tokens[0] != _instrument):
             if self.debug:
                 log.debug(
