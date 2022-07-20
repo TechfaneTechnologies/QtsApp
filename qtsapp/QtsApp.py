@@ -434,7 +434,7 @@ class QTSAppUser(threading.Thread):
 
     def _resubscribe_on_instrument_change(self):
         instrument, expiry = self._ws_ir[
-            "J3"].value, (self._ws_ir["K3"].value).strftime("%d-%b-%y")
+            "E3"].value, (self._ws_ir["F3"].value).strftime("%d-%b-%y")
         # print(self.subscribed_tokens[0], [instrument, expiry])
         if self.subscribed_tokens[0] != [instrument, expiry]:
             if self.debug:
@@ -1239,7 +1239,7 @@ class QTSAppStream(threading.Thread):
 
     def _resubscribe_on_instrument_change(self):
         instrument, expiry = self._ws_ir[
-            "J3"].value, self._ws_ir["K3"].value
+            "E3"].value, self._ws_ir["F3"].value
         if isinstance(expiry, dtdt):
             _expiry = expiry.strftime("%d%m%Y")
         _instrument = f"{instrument.upper()}:{_expiry}"
