@@ -876,8 +876,8 @@ class QTSAppUser(threading.Thread):
     def _on_init_get_option_chain(self, _symbol: str=None, _expiry: str=None):
         self._update_excel_wb()
         if not _symbol and not _expiry:
-            _symbol = self._ws_ir["J3"].value
-            _expiry = self._ws_ir["K3"].value
+            _symbol = self._ws_ir["E3"].value
+            _expiry = self._ws_ir["F3"].value
         _instrument = f'{_symbol}:{_expiry.strftime("%d%m%Y")}'
         # print(f'{_instrument}')
         self.subscribe(_symbol, _expiry.strftime("%d-%b-%y"))
@@ -1684,8 +1684,8 @@ class QTSAppStream(threading.Thread):
     def _on_init_get_option_chain(self, _symbol: str=None, _expiry: str=None):
         self._update_excel_wb()
         if not _symbol and not _expiry:
-            _symbol = self._ws_ir["J3"].value
-            _expiry = self._ws_ir["K3"].value
+            _symbol = self._ws_ir["E3"].value
+            _expiry = self._ws_ir["F3"].value
         _instrument = f'{_symbol}:{_expiry.strftime("%d%m%Y")}'
         # print(f'{_instrument}')
         self.to_be_subscribed_tokens.append([_symbol, _expiry])
