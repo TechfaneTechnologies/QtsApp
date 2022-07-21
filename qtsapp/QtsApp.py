@@ -175,7 +175,7 @@ class QTSAppUser(threading.Thread):
                  password: str=None,
                  api_key: str=None,
                  access_token: str=None,
-                 ws_name: str="OptionChain",
+                 ws_name: str=None,
                  debug=False,
                  reconnect=True,
                  reconnect_max_tries=RECONNECT_MAX_TRIES,
@@ -208,7 +208,7 @@ class QTSAppUser(threading.Thread):
         self.on_message = None
         self.on_reconnect = None
         self.on_noreconnect = None
-        self.__ws_name = ws_name
+        self.__ws_name = ws_name if ws_name else "OptionChain"
         # List of current subscribed tokens
         self.subscribed_tokens = []
         self._user_agent = requests.get(
@@ -982,7 +982,7 @@ class QTSAppStream(threading.Thread):
                  password: str=None,
                  api_key: str=None,
                  access_token: str=None,
-                 ws_name: str="OptionChain",
+                 ws_name: str=None,
                  debug=False,
                  reconnect=True,
                  update_excel=False,
@@ -1016,7 +1016,7 @@ class QTSAppStream(threading.Thread):
         self.on_message = None
         self.on_reconnect = None
         self.on_noreconnect = None
-        self.__ws_name = ws_name
+        self.__ws_name = ws_name if ws_name else "OptionChain"
         # List of to be subscribed tokens
         self.to_be_subscribed_tokens = []
         # List of current subscribed tokens
@@ -2081,9 +2081,9 @@ def _isNowInTimePeriod(startTime, endTime, nowTime):
 def QtsAppRun(_stream=False, ws_name="OptionChain"):
     if _isNowInTimePeriod(dt.time(9, 15), dt.time(15, 30), dtdt.now().time()) \
             and (dtdt.now().strftime("%A") not in ["Saturday", "Sunday"]) and _stream:
-        qtsapp = QTSAppStream(ws_name)
+        qtsapp = QTSAppStream(ws_name=ws_name)
     else:
-        qtsapp = QTSAppUser(ws_name)
+        qtsapp = QTSAppUser(ws_name=ws_name)
 
     def on_connect(ws, response):
         qtsapp._on_init_get_option_chain()
