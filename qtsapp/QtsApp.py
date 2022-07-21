@@ -449,6 +449,8 @@ class QTSAppUser(threading.Thread):
         else:
             if self.__stream:
                 self.resubscribe()
+                self.__stream = (_isNowInTimePeriod(dt.time(9, 15), dt.time(15, 30), dtdt.now(  # noqa: E501
+                ).time()) and (dtdt.now().strftime("%A") not in ["Saturday", "Sunday"]))  # noqa: E501
 
     def resubscribe_on_instrument_change(self):
         # if self._connected_event.wait(timeout=10):
