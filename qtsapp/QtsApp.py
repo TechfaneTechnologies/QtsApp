@@ -12,6 +12,7 @@ import pandas as pd
 import numpy as np
 import xlwings as xw
 import datetime as dt
+from numpy import random
 from time import sleep
 from datetime import datetime as dtdt
 from contextlib import closing
@@ -229,6 +230,8 @@ class QTSAppUser(threading.Thread):
         self.ws_endpoints["user"] = f"wss://wsoc.quantsapp.com/?user_id={self._api_key}&token={self._access_token}&portal=web&version={self._app_version}&country=in"
         self.ws_endpoints["streaming"] = f"wss://server.quantsapp.com/stream?user_id={self._api_key}&token={self._access_token}&portal=web&version={self._app_version}&country=in&force_login=false"
         self.socket_url = self.ws_endpoints["user"]
+        self.__stream = (_isNowInTimePeriod(dt.time(9, 15), dt.time(15, 30), dtdt.now(
+        ).time()) and (dtdt.now().strftime("%A") not in ["Saturday", "Sunday"]))
         self._connected_event = threading.Event()
 
     def _get_app_version(self):
@@ -441,6 +444,9 @@ class QTSAppUser(threading.Thread):
                 log.debug(
                     "Resubscribe: {} - {}".format(instrument, expiry))
             self.subscribe(instrument, expiry)
+        else:
+            if self.__stream:
+                self.resubscribe()
 
     def resubscribe_on_instrument_change(self):
         # if self._connected_event.wait(timeout=10):
@@ -2070,8 +2076,9 @@ def _isNowInTimePeriod(startTime, endTime, nowTime):
         return nowTime >= startTime or nowTime <= endTime
 
 
-def QtsAppRun():
-    if _isNowInTimePeriod(dt.time(9, 15), dt.time(15, 30), dtdt.now().time()) and (dtdt.now().strftime("%A") not in ["Saturday", "Sunday"]):
+def QtsAppRun(_stream=False):
+    if _isNowInTimePeriod(dt.time(9, 15), dt.time(15, 30), dtdt.now().time()) \
+            and (dtdt.now().strftime("%A") not in ["Saturday", "Sunday"]) and _stream:
         qtsapp = QTSAppStream()
     else:
         qtsapp = QTSAppUser()
@@ -2087,4 +2094,5 @@ def QtsAppRun():
     sleep(10)
     while True:
         qtsapp.resubscribe_on_instrument_change()
-        sleep(10)
+        sleep(random.uniform(7.5, 9.5))
+        # sleep(10)
