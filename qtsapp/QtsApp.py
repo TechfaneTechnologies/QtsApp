@@ -175,6 +175,7 @@ class QTSAppUser(threading.Thread):
                  password: str=None,
                  api_key: str=None,
                  access_token: str=None,
+                 ws_name: str="OptionChain",
                  debug=False,
                  reconnect=True,
                  reconnect_max_tries=RECONNECT_MAX_TRIES,
@@ -207,6 +208,7 @@ class QTSAppUser(threading.Thread):
         self.on_message = None
         self.on_reconnect = None
         self.on_noreconnect = None
+        self.__ws_name = ws_name
         # List of current subscribed tokens
         self.subscribed_tokens = []
         self._user_agent = requests.get(
@@ -849,10 +851,9 @@ class QTSAppUser(threading.Thread):
         except ValueError:
             raise ValueError(f"The Specified File {_file_path} Does Not Exist, Please Create The File & Try Again")  # noqa: E501
 
-    def _update_excel_wb(self, _wb_name: str=None):
-        _wb_name = "OptionChain" if not _wb_name else _wb_name
+    def _update_excel_wb(self):
         self._wb = xw.Book(
-            self._check_n_return_file_path(f"{_wb_name}.xlsx"))
+            self._check_n_return_file_path(f"{self.__ws_name}.xlsx"))
         self._ws_ir = self._wb.sheets["IR"]
         self._ws_rawdata = self._wb.sheets["RawData"]
         self._ws_ir["A1"].options(pd.DataFrame, index=False, header=False,
@@ -981,6 +982,7 @@ class QTSAppStream(threading.Thread):
                  password: str=None,
                  api_key: str=None,
                  access_token: str=None,
+                 ws_name: str="OptionChain",
                  debug=False,
                  reconnect=True,
                  update_excel=False,
@@ -1014,6 +1016,7 @@ class QTSAppStream(threading.Thread):
         self.on_message = None
         self.on_reconnect = None
         self.on_noreconnect = None
+        self.__ws_name = ws_name
         # List of to be subscribed tokens
         self.to_be_subscribed_tokens = []
         # List of current subscribed tokens
@@ -1657,10 +1660,9 @@ class QTSAppStream(threading.Thread):
         except ValueError:
             raise ValueError(f"The Specified File {_file_path} Does Not Exist, Please Create The File & Try Again")  # noqa: E501
 
-    def _update_excel_wb(self, _wb_name: str=None):
-        _wb_name = "OptionChain" if not _wb_name else _wb_name
+    def _update_excel_wb(self):
         self._wb = xw.Book(
-            self._check_n_return_file_path(f"{_wb_name}.xlsx"))
+            self._check_n_return_file_path(f"{self.__ws_name}.xlsx"))
         self._ws_ir = self._wb.sheets["IR"]
         self._ws_rawdata = self._wb.sheets["RawData"]
         self._ws_ir["A1"].options(pd.DataFrame, index=False, header=False,
@@ -2076,12 +2078,12 @@ def _isNowInTimePeriod(startTime, endTime, nowTime):
         return nowTime >= startTime or nowTime <= endTime
 
 
-def QtsAppRun(_stream=False):
+def QtsAppRun(_stream=False, ws_name="OptionChain"):
     if _isNowInTimePeriod(dt.time(9, 15), dt.time(15, 30), dtdt.now().time()) \
             and (dtdt.now().strftime("%A") not in ["Saturday", "Sunday"]) and _stream:
-        qtsapp = QTSAppStream()
+        qtsapp = QTSAppStream(ws_name)
     else:
-        qtsapp = QTSAppUser()
+        qtsapp = QTSAppUser(ws_name)
 
     def on_connect(ws, response):
         qtsapp._on_init_get_option_chain()
