@@ -1,7 +1,7 @@
 # QtsApp
-### The Python Library For Qtsapp Which Displays The Option Chain In Near Real-time. This Program Retrieves This Data From The Qtsapp Site And Then Generates Useful Analysis Of The Option Chain For The Specified Index Or Stock. It Also Continuously Refreshes The Option Chain Along With Implied Volatatlity (IV), Open Interest (OI), Delta, Theta, Vega, Gamma, Vanna, Charm, Speed, Zomma, Color, Volga, Veta At An Interval Of A Second And Visually Displays The Trend In Various Indicators Useful For Technical Analysis.
+The Python Library For Qtsapp Which Displays The Option Chain In Near Real-time. This Program Retrieves This Data From The Qtsapp Site And Then Generates Useful Analysis Of The Option Chain For The Specified Index Or Stock. It Also Continuously Refreshes The Option Chain Along With Implied Volatatlity (IV), Open Interest (OI), Delta, Theta, Vega, Gamma, Vanna, Charm, Speed, Zomma, Color, Volga, Veta At An Interval Of A Second And Visually Displays The Trend In Various Indicators Useful For Technical Analysis.
 
-## _If You have liked the library, Do Star This Repository and Stay-Up-To-Date_
+#### _If You have liked the library, Do Star This Repository and Stay-Up-To-Date_
 <p align="center">
   <img src="https://user-images.githubusercontent.com/96371033/180197157-aabda812-828b-4cf7-97a6-a4b9bdd8b151.gif" alt="How To Star A Repository">
 </p>
