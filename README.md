@@ -13,7 +13,7 @@ Either Install it via `pip install -U git+https://github.com/TechfaneTechnologie
 First Open the `.env.secret` and update the two fields `USER_NAME=Your_User_Name_or_Id` and `PASSWORD=Your_Password`, Now Save and Close the File.
 And Then run `python example.py` to get the live data. _(Run During Market Times For Live Data)_
 
-*If you are using google signin method, the above procedure will not work, and you have to get the `api_key` and `api_token` via inspecting the page with chrome developer tools. And update the same in `.env` file instead of `.env.secret`*
+_**If you are using google signin method, the above procedure will not work, and you have to get the `api_key` and `api_token` via inspecting the page with chrome developer tools. And update the same in `.env` file instead of `.env.secret`, To know How To Do The Same, Please Follow This [Guideline](https://github.com/TechfaneTechnologies/QtsApp/blob/main/GetApiKeyAndAccessTokenFromBrowser.md)**_
 
 ## Note
 Keep the `.env`, `.env.secret` and `exaple.py` in the same directory before running `python example.py` to get the live data. _(Run During Market Times)_
