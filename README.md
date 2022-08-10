@@ -34,6 +34,8 @@ With This  You can get live option chain data (of any NFO instrument and any val
 
 ![QtsAppScreenshot](https://user-images.githubusercontent.com/68828793/178950834-dd3eb6e7-fbfd-40d4-a5c8-a49f87fa4a43.png)
 
+https://www.youtube.com/watch?v=XKFjufDaFhk
+
 https://www.youtube.com/watch?v=2TT9wkO2nH0
 
 https://www.youtube.com/watch?v=7xujRROvIcY
