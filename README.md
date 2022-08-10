@@ -1,5 +1,5 @@
 # QtsApp
-The Python Library For Qtsapp Which Displays The Option Chain In Near Real-time. This Program Retrieves This Data From The Qtsapp Site And Then Generates Useful Analysis Of The Option Chain For The Specified Index Or Stock. It Also Continuously Refreshes The Option Chain Along With Implied Volatatlity (IV), Open Interest (OI), Delta, Theta, Vega, Gamma, Vanna, Charm, Speed, Zomma, Color, Volga, Veta At An Interval Of A Second And Visually Displays The Trend In Various Indicators Useful For Technical Analysis.
+The Python Library For Qtsapp Which Displays The Option Chain In Near [Real-time](https://youtu.be/XKFjufDaFhk). This Program Retrieves This Data From The Qtsapp Site And Then Generates Useful Analysis Of The Option Chain For The Specified Index Or Stock. It Also Continuously Refreshes The Option Chain Along With Implied Volatatlity (IV), Open Interest (OI), Delta, Theta, Vega, Gamma, Vanna, Charm, Speed, Zomma, Color, Volga, Veta At An Interval Of A Second And Visually Displays The Trend In Various Indicators Useful For Technical Analysis.
 
 #### _If You have liked the library, Do Star This Repository and Stay-Up-To-Date_
 <p align="center">
@@ -10,10 +10,21 @@ The Python Library For Qtsapp Which Displays The Option Chain In Near Real-time.
 
 Install The QtsApp Library Via `pip install -U git+https://github.com/TechfaneTechnologies/QtsApp.git@dev` And Then Clone The Repo Via `git clone https://github.com/TechfaneTechnologies/QtsApp.git`
 
-First Open the `.env.secret` and update the two fields `USER_NAME=Your_User_Name_or_Id` and `PASSWORD=Your_Password`, Now Save and Close the File.
-And Then run `python example.py` to get the live data. _(Run During Market Times For Live Data)_
+```shell
+pip install -U git+https://github.com/TechfaneTechnologies/QtsApp.git@dev
+git clone https://github.com/TechfaneTechnologies/QtsApp.git
+```
 
-_**If you are using google signin method, the above procedure will not work, and you have to get the `api_key` and `api_token` via inspecting the page with chrome developer tools. And update the same in `.env` file instead of `.env.secret`, To know How To Do The Same, Please Follow This [Guideline](https://github.com/TechfaneTechnologies/QtsApp/blob/main/GetApiKeyAndAccessTokenFromBrowser.md)**_
+_**If you are using UserId and Password Method To Login, Then Open the `.env.secret` and update the two fields `USER_NAME=Your_User_Name_or_Id` and `PASSWORD=Your_Password`, Now Save and Close the File.**_
+
+_**Otherwise, If you are using google signin method, the above procedure will not work, and you have to get the `api_key` and `api_token` manually. And update the same in `.env` file instead of `.env.secret`, To know How To Do The Same, Please Follow This [Guideline](https://github.com/TechfaneTechnologies/QtsApp/blob/main/GetApiKeyAndAccessTokenFromBrowser.md)**_
+
+**Post Updating And Saving The `.env` or `.env.secret` Then run the following commands to get the live data. _(Run During Market Times For Live Data)_**
+
+```shell
+cd QtsApp
+python .\example.py
+```
 
 ## Note
 Keep the `.env`, `.env.secret` and `exaple.py` in the same directory before running `python example.py` to get the live data. _(Run During Market Times)_
