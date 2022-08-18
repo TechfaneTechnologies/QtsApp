@@ -1095,13 +1095,17 @@ class QTSAppStream(threading.Thread):
                                     strike_list_length_float_array,
                                 )
                             ),
-                            "FutureOrFairPrice": map(
-                                lambda x: futureorfairprice,
-                                strike_list_length_str_array,
+                            "FutureOrFairPrice": list(
+                                map(
+                                    lambda x: futureorfairprice,
+                                    strike_list_length_str_array,
+                                )
                             ),
-                            "FutureDataUpdateTimeStamp": map(
-                                lambda x: timestamp,
-                                strike_list_length_int_array,
+                            "FutureDataUpdateTimeStamp": list(
+                                map(
+                                    lambda x: timestamp,
+                                    strike_list_length_int_array,
+                                )
                             ),
                         }
 
