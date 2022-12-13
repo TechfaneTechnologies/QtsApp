@@ -645,20 +645,21 @@ class QTSAppUser(threading.Thread):
         self._instruments = self._master_script.keys()
 
     def _get_instrument_records(self):
-        _instrument_records = [["SymbolName", "ExpiryDate", "LotSize", "Strikes"]]
-        for _symbol in self._instruments:
-            _instrument_records.extend(
-                [
-                    [
-                        _symbol,
-                        self._master_script[_symbol]["expiry"][_idx],
-                        lot,
-                        len(self._master_script[_symbol]["strikes"][0]),
-                    ]
-                    for _idx, lot in enumerate(self._master_script[_symbol]["lot"])
-                ]
-            )
-        self._instrument_records = pd.DataFrame(_instrument_records)
+        _instrument_records_cols = ["SymbolName", "ExpiryDate", "LotSize", "Strikes"]
+        # print(self._instruments)
+        _instrument_records = [
+            [
+                _symbol,
+                self._master_script[_symbol]["expiry"][_idx],
+                lot,
+                len(self._master_script[_symbol]["strikes"][0]),
+            ]
+            for _symbol in self._instruments
+            for _idx, lot in enumerate(self._master_script[_symbol]["lot"])
+        ]
+        self._instrument_records = pd.DataFrame(
+            _instrument_records, columns=_instrument_records_cols
+        )
 
     def _get_lot_value(self, _symbol: str, _expiry: str):
         if (
@@ -1095,7 +1096,7 @@ class QTSAppUser(threading.Thread):
             self._instrument_records,
             convert=pd.DataFrame,
             index=False,
-            header=False,
+            header=True,
             expand="table",
         )
 
