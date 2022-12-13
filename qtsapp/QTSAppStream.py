@@ -795,21 +795,21 @@ class QTSAppStream(threading.Thread):
         self._instruments = self._master_script.keys()
 
     def _get_instrument_records(self):
-        _instrument_records = [["SymbolName", "ExpiryDate", "LotSize", "Strikes"]]
+        _instrument_records_cols = ["SymbolName", "ExpiryDate", "LotSize", "Strikes"]
         # print(self._instruments)
-        for _symbol in self._instruments:
-            _instrument_records.extend(
-                [
-                    [
-                        _symbol,
-                        self._master_script[_symbol]["expiry"][_idx],
-                        lot,
-                        len(self._master_script[_symbol]["strikes"][0]),
-                    ]
-                    for _idx, lot in enumerate(self._master_script[_symbol]["lot"])
-                ]
-            )
-        self._instrument_records = pd.DataFrame(_instrument_records)
+        _instrument_records = [
+            [
+                _symbol,
+                self._master_script[_symbol]["expiry"][_idx],
+                lot,
+                len(self._master_script[_symbol]["strikes"][0]),
+            ]
+            for _symbol in self._instruments
+            for _idx, lot in enumerate(self._master_script[_symbol]["lot"])
+        ]
+        self._instrument_records = pd.DataFrame(
+            _instrument_records, columns=_instrument_records_cols
+        )
 
     def _get_lot_value(self, _symbol: str, _expiry: str):
         if (
@@ -1717,7 +1717,7 @@ class QTSAppStream(threading.Thread):
             self._instrument_records,
             convert=pd.DataFrame,
             index=False,
-            header=False,
+            header=True,
             expand="table",
         )
 
@@ -1799,20 +1799,15 @@ class QTSAppStream(threading.Thread):
 
     def _set_process_and_join_at(self):
         if len(self.subscribed_tokens) > 0:
-            (self._process_at,) = self._instrument_records.Strikes[
-                np.where(
-                    (
-                        self._instrument_records.SymbolName
-                        == self.subscribed_tokens[0].split(":")[0]
-                    )
-                    & (
-                        self._instrument_records.ExpiryDate
-                        == dtdt.strptime(
-                            self.subscribed_tokens[0].split(":")[-1],
-                            "%d%m%Y",
-                        ).strftime("%d-%b-%Y")
-                    )
-                )
+            _symbol, _expiry = self.subscribed_tokens[0].split(":")[0], dtdt.strptime(
+                self.subscribed_tokens[0].split(":")[-1],
+                "%d%m%Y",
+            ).strftime("%d-%b-%Y")
+            (self._process_at,) = self._instrument_records.at[
+                self._instrument_records.query(
+                    "SymbolName== @_symbol & ExpiryDate== @_expiry"
+                )["Strikes"].index[0],
+                "Strikes",
             ]
             self._join_at = self._process_at * 2
             print(self._process_at, self._join_at)
