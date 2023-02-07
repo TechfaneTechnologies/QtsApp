@@ -1,3 +1,6 @@
+### Seems QtsApp Website Has Overhauled Their CodeBase & Put The Higher Order Greeks (Vanna, Charm, Speed, Zomma, Color, Volga, Veta) Stream Behind A Paywall, This Library needs a rewrite circumventing the paywall, Hence you are requested not to use the library until further updates and removal of this message.
+
+
 # QtsApp
 The Python Library For Qtsapp Which Displays The Option Chain In Near Real Time _([YT Video](https://youtu.be/XKFjufDaFhk))_. This Program Retrieves This Data From The Qtsapp Site And Then Generates Useful Analysis Of The Option Chain For The Specified Index Or Stock. It Also Continuously Refreshes The Option Chain Along With Implied Volatatlity (IV), Open Interest (OI), Delta, Theta, Vega, Gamma, Vanna, Charm, Speed, Zomma, Color, Volga, Veta At An Interval Of A Second And Visually Displays The Trend In Various Indicators Useful For Technical Analysis.
 
